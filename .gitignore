@@ -85,3 +85,28 @@ Desktop.ini
 
 # SQLite
 *.sqlite3
+/utils/slt_models/slrtp25_bt_phoenix14t/best.ckpt
+/utils/slt_models/slrtp25_bt_phoenix14t/__init__.py
+/utils/slt_models/slrtp25_bt_phoenix14t/bt_embeddings.py
+/utils/slt_models/slrtp25_bt_phoenix14t/best.ckpt
+/utils/slt_models/slrtp25_bt_phoenix14t/bt_attention.py
+/utils/slt_models/slrtp25_bt_phoenix14t/gls.vocab
+/utils/slt_models/slrtp25_bt_phoenix14t/bt_transformer_layers.py
+/utils/slt_models/slrtp25_bt_phoenix14t/bt_decoders.py
+/utils/slt_models/slrtp25_bt_phoenix14t/bt_model.py
+/utils/slt_models/slrtp25_bt_phoenix14t/txt.vocab
+/utils/slt_models/slrtp25_bt_phoenix14t/bt_initialization.py
+/utils/slt_models/slrtp25_bt_phoenix14t/bt_search.py
+/utils/slt_models/slrtp25_bt_phoenix14t/bt_encoders.py
+/utils/slt_models/slrtp25_bt_phoenix14t/back_translate.py
+/utils/slt_models/slrtp25_bt_phoenix14t/config.yaml
+/utils/metrics/slrtp_challenge_2025_evaluation/external_metrics/
+/utils/metrics/slrtp_challenge_2025_evaluation/requirements.txt
+/utils/metrics/slrtp_challenge_2025_evaluation/README.md
+/utils/metrics/slrtp_challenge_2025_evaluation/main.py
+/utils/metrics/slrtp_challenge_2025_evaluation/make_128_face_from_478.py
+/utils/metrics/slrtp_challenge_2025_evaluation/__init__.py
+/utils/metrics/slrtp_challenge_2025_evaluation/plot_pose.py
+/utils/metrics/slrtp_challenge_2025_evaluation/skeleton_def.py
+/utils/metrics/slrtp_challenge_2025_evaluation/helpers.py
+/utils/metrics/slrtp_challenge_2025_evaluation/metrics.py

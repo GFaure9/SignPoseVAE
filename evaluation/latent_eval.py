@@ -9,7 +9,11 @@ import seaborn as sns
 from tqdm import tqdm
 from typing import Tuple, List, Union
 
-# todo: adapt to remove LatentSLPDataset
+from ..data.dataset import SLPDataset, build_slp_dataloader
+from ..model.autoencoders import load_vae
+from ..utils.logs_checkpoints import load_ckpt
+
+
 class LatentSpaceAnalyzer:
     _default_metrics = (
         "latent_smoothness",
@@ -22,35 +26,47 @@ class LatentSpaceAnalyzer:
 
     def run(
             self,
-            cfg_data: dict,
+            cfg_model: dict,  # VAE config (dictionary)
+            ckpt_path: str,  # path to trained VAE checkpoint
+            cfg_data: dict,  # data config (dictionary)
             output_folder: str,
             name: str,
             metrics: tuple = None,
             plot_correl: bool = False,
             batch_size: int = 256,
+            device: str = "cuda",
     ):
         os.makedirs(output_folder, exist_ok=True)
 
-        # === 1) Load dataset & build dataloader
-        print("1 - Loading dataset and building dataloader...")
+        # === 1.a) Load the VAE and freeze its weights
+        print("1.a - Loading Sign Pose VAE...")
+
+        ckpt = load_ckpt(ckpt_path, device=device)
+        skelmotionvae = load_vae(name=cfg_model.get("name", "SkelMotionMultiRegionVAE"), cfg=cfg_model)
+        skelmotionvae.load_state_dict(ckpt["model_state_dict"], strict=False)
+        skelmotionvae = skelmotionvae.to(device=device)
+
+        print("Done.\n")
+
+        # === 1.b) Load dataset & build dataloader
+        print("1.b - Loading dataset and building dataloader...")
 
         data_path = cfg_data["path"]
         path_kwarg = {f"{cfg_data['type']}_path": data_path}
         data_params = {
-            "latent_pose_field": cfg_data["latent_pose_field"],
+            "skel_field": cfg_data["skel_field"],
             "id_field": cfg_data["id_field"],
-            "text_emb_field": cfg_data["text_emb_field"],
-            "text_emb_seq_field": cfg_data["text_emb_seq_field"],
-            "text_bert_field": cfg_data["text_bert_field"],
+            "skip_frames":cfg_data["skip_frames"],
         }
-        data = LatentSLPDataset(**path_kwarg, **data_params)
+        data = SLPDataset(**path_kwarg, **data_params, load_only_skel=True)
 
         pad_value = 0.0
         dataloader_params = {
             "pad_value": pad_value,
             "batch_size": batch_size,
+            "fixed_seq_len": cfg_model["T"],
         }
-        dataloader = build_latentslp_dataloader(dataset=data, shuffle=False, **dataloader_params)
+        dataloader = build_slp_dataloader(dataset=data, shuffle=False, **dataloader_params)
 
         print("Done.\n")
 
@@ -76,22 +92,24 @@ class LatentSpaceAnalyzer:
         mean_abs_offdiag_corr_tot = 0.
 
         for batch in tqdm(dataloader, desc="Metrics computation over the dataset..."):
-            latent_poses = batch["poses_lat"]  # (B, T, d)
-            pad_mask = (latent_poses != pad_value).any(dim=-1)  # (B, T) | boolean (True => NOT pad)
+            poses = batch["skels"].to(device)  # (B, T, N, 3)
+            B, T = poses.shape[:2]
+            poses_pad_mask = ~(poses.view(B, T, -1) != pad_value).any(dim=-1)  # (B, T) | boolean (True=>pad)
+            mu, _, _ = skelmotionvae.encode(X=poses, pad_mask=poses_pad_mask)
             n_tot += len(batch)
             n_batches += 1
             for m in metrics:
                 if m == "latent_smoothness":
                     # sum over batch samples
-                    v_batch, a_batch = self.temporal_smoothness(latent_poses, pad_mask)
+                    v_batch, a_batch = self.temporal_smoothness(mu, ~poses_pad_mask)
                     v_tot += v_batch
                     a_tot += a_batch
                 elif m == "latent_energy":
                     # sum over batch samples
-                    e_tot += self.latent_energy(latent_poses, pad_mask)
+                    e_tot += self.latent_energy(mu, ~poses_pad_mask)
                 elif m == "covariance_matrix":
                     # already per-batch values
-                    covariance_metrics = self.empirical_covariance_matrix(latent_poses, pad_mask)
+                    covariance_metrics = self.empirical_covariance_matrix(mu, ~poses_pad_mask)
                     effective_dim_tot += covariance_metrics["effective_dim"]
                     anisotropy_ratio_tot += covariance_metrics["anisotropy_ratio"]
                     mean_abs_offdiag_corr_tot += covariance_metrics["mean_abs_offdiag_corr"]
@@ -305,16 +323,30 @@ class LatentSpaceAnalyzer:
 def evaluate_latent_space(
         output_folders: Union[str, List[str]],
         names: Union[str, List[str]],
+        cfg_model_filepaths: Union[str, List[str]],
+        ckpt_filepaths: Union[str, List[str]],
         cfg_data_filepaths: Union[str, List[str]],
         metrics: tuple = None,
         batch_size: int = 256,
         plot_correl: bool = False,
 ):
+    # -- load model config(s)
+    if isinstance(cfg_model_filepaths, str):
+        cfg_model_filepaths = [cfg_model_filepaths]
+
+    print("Loading model configs...")
+
+    model_configs = []
+    for cfg_model_fpath in cfg_model_filepaths:
+        print(f"   - {cfg_model_fpath}")
+        with open(cfg_model_fpath, "r") as f:
+            model_configs.append(yaml.safe_load(f))
+
     # -- load data config(s)
     if isinstance(cfg_data_filepaths, str):
         cfg_data_filepaths = [cfg_data_filepaths]
 
-    print("Loading latent data configs...")
+    print("Loading dataset configs...")
 
     data_configs = []
     for cfg_data_fpath in cfg_data_filepaths:
@@ -333,11 +365,17 @@ def evaluate_latent_space(
 
     print("\nRunning latent space analysis for each config...")
 
-    for cfg_data, out_folder, name in zip(
-            data_configs, output_folders, names
+    for cfg_model, ckpt_path, cfg_data, out_folder, name in zip(
+            model_configs,
+            ckpt_filepaths,
+            data_configs,
+            output_folders,
+            names
     ):
         print(f"   ==> running for '{name}'...")
         analyzer.run(
+            cfg_model=cfg_model,
+            ckpt_path=ckpt_path,
             cfg_data=cfg_data,
             output_folder=out_folder,
             name=name,

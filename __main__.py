@@ -3,18 +3,13 @@ import os
 import yaml
 from pathlib import Path
 
-from .utils.str2bool import str2bool
 from .trainers.train_autoencoder import train_skelmotionvae, compute_skelmotionvae_predictions
 
 import random
 import torch
-import sys
 
-# ************** temp imports for video generation **************
-sys.path.append("../..")
 from utils.visualization.make_video import make_video_simple
 from utils.visualization.skels_def import MP178_CONNECTIONS, MP178_LH_IDS, MP178_RH_IDS, MP178_FACE_IDS
-# ***************************************************************
 
 
 def main():
