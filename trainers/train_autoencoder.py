@@ -24,16 +24,7 @@ class VAETrainer:
             beta_end: float = 1.,
             warmup_epochs: int = 10,
             recon_annealing_epochs: dict[str, int] = None,
-            with_clip: bool = False,
-            clip_model: LatentSignLanguageCLIP = None,
-            clip_loss_fn: CLIPLoss = None,
-            clip_loss_scaling: float = 1.,
-            # ----- maybe for the future... --------
-            # (For now VAE decoder will always be frozen when jointly training CLIP model)
-            # freeze_vae_decoder_epochs: int = 0,
-            # --------------------------------------
             skels_pad_value: float = 0.,
-            txt_input_ids_pad_value: int = 0,
 
     ):
         self.device = device
@@ -58,18 +49,8 @@ class VAETrainer:
         self.alpha_end = 1.
         self.recon_annealing_epochs = recon_annealing_epochs
 
-        # == CLIP joint training
-        if with_clip:
-            assert (clip_model is not None), "For jointly train a CLIP model, a trainable CLIP model must be provided"
-            assert (clip_loss_fn is not None), "For jointly train a CLIP model, a CLIP loss function must be provided"
-        self.with_clip = with_clip
-        self.clip_model = clip_model
-        self.clip_loss_fn = clip_loss_fn
-        self.clip_loss_scaling = clip_loss_scaling
-        # self.freeze_vae_decoder_epochs = freeze_vae_decoder_epochs
         # -- pad values (to allow for padding mask reconstruction later)
         self.skels_pad_value = skels_pad_value
-        self.txt_input_ids_pad_value = txt_input_ids_pad_value
 
     def compute_beta(self, epoch, method: str = "monotonic"):
         if method == "monotonic":
@@ -107,21 +88,6 @@ class VAETrainer:
             kl_loss_val = self.kl_loss_fn(mu, logvar)
             loss_val = recon_loss_val + beta * kl_loss_val
 
-            # ******* Computing CLIP model loss *******
-            if self.with_clip:
-                txt_input_ids = batch["text"].to(self.device)
-                input_ids_pad_mask = (txt_input_ids == self.txt_input_ids_pad_value)
-                z_clip_emb, txt_clip_emb = self.clip_model(
-                    skelmotion_latent_X=z,
-                    text_input_ids=txt_input_ids,
-                    skelmotion_padding_mask=x_pad_mask,
-                    input_ids_padding_mask=input_ids_pad_mask,
-                )
-                clip_loss_val = self.clip_loss_fn(z_clip_emb, txt_clip_emb)
-                loss_val += self.clip_loss_scaling * clip_loss_val
-                loss_clip_tot += clip_loss_val.item()
-            # *****************************************
-
             self.optimizer.zero_grad()
             loss_val.backward()
             self.optimizer.step()
@@ -139,8 +105,6 @@ class VAETrainer:
             "kl": loss_kl_tot / num_batches,
             "beta": beta,
         }
-        if self.with_clip:
-            output["clip"] = loss_clip_tot / num_batches
 
         return output
 
@@ -182,30 +146,22 @@ class VAETrainer:
             # -- write training logs
             train_history.append(train_stats)
             write_epoch_logs(path=train_logs_path, epoch=epoch, stats=train_stats)
-            train_stats_clip_log = "" if not self.with_clip else f"clip={train_stats['clip']:.4f}  |"
             print(
                 f"Epoch {epoch}:    "
                 f"loss={train_stats['loss']:.4f}  |"
                 f"recon={train_stats['recon']:.4f}  |"
                 f"kl={train_stats['kl']:.4f}  |"
-                f"beta={train_stats['beta']:.4f}  |" + train_stats_clip_log
+                f"beta={train_stats['beta']:.4f}  |"
             )
 
             # ============= VALIDATION (every `val_freq` epochs) =============
             if epoch % val_freq == 0:
-                clip_kwargs = {
-                    "clip_model": self.clip_model,
-                    "clip_loss_fn": self.clip_loss_fn,
-                    "skels_pad_value": self.skels_pad_value,
-                    "txt_input_ids_pad_value": self.txt_input_ids_pad_value,
-                }
                 val_stats = evaluate(
                     model=self.model,
                     dataloader=val_dataloader,
                     recon_loss_fn=self.recon_loss_fn,
                     kl_loss_fn=self.kl_loss_fn,
                     device=self.device,
-                    **clip_kwargs
                 )
 
                 # -- update best validation loss
@@ -224,17 +180,6 @@ class VAETrainer:
                         optimizer_state_dict=self.optimizer.state_dict(),
                         val_loss=best_val_loss,
                     )
-                    # ********** Save CLIP model + optimizer (best) **********
-                    if self.with_clip:
-                        save_ckpt(
-                            path=os.path.join(ckpt_dir, f"{best_val_ckpt_prefix}_clip.ckpt"),
-                            epoch=epoch,
-                            model_state_dict=self.clip_model.state_dict(),
-                            optimizer_state_dict=self.optimizer.state_dict(),
-                            val_loss=best_val_loss,
-                            extra_states={"clip_loss_state_dict": self.clip_loss_fn.state_dict()},
-                        )
-                    # ********************************************************
 
                 # -- write validation logs & save ckpt (replace last validation epoch one)
                 val_history.append(val_stats)
@@ -247,24 +192,11 @@ class VAETrainer:
                     val_loss=val_stats["loss"],
                 )
 
-                # ********* Save CLIP model + optimizer (every) **********
-                if self.with_clip:
-                    save_ckpt(
-                        path=os.path.join(ckpt_dir, f"{last_val_ckpt_prefix}_clip.ckpt"),
-                        epoch=epoch,
-                        model_state_dict=self.clip_model.state_dict(),
-                        optimizer_state_dict=self.optimizer.state_dict(),
-                        val_loss=val_stats["loss"],
-                        extra_states={"clip_loss_state_dict": self.clip_loss_fn.state_dict()},
-                    )
-                # *********************************************************
-
-                val_stats_clip_log = "" if not self.with_clip else f"clip={val_stats['clip']:.4f}  |"
                 print(
                     f"==> Validation metrics:    "
                     f"loss={val_stats['loss']:.4f}  |"
                     f"recon={val_stats['recon']:.4f}  |"
-                    f"kl={val_stats['kl']:.4f}  |" + val_stats_clip_log
+                    f"kl={val_stats['kl']:.4f}  |"
                 )
 
                 # -- update scheduler based on validation loss
@@ -295,11 +227,7 @@ def evaluate(
         recon_loss_fn,
         kl_loss_fn,
         device="cuda",
-        # -- CLIP args (if clip_moel or clip_loss_fn is set to None, nothing else is done)
-        clip_model=None,
-        clip_loss_fn=None,
         skels_pad_value: float = None,
-        txt_input_ids_pad_value: int = None,
 ):
     model.eval()
     loss_recon_tot = 0.
@@ -317,22 +245,6 @@ def evaluate(
         kl_loss_val = kl_loss_fn(mu, logvar)
         loss_val = recon_loss_val + kl_loss_val
 
-        # ******* Computing CLIP model loss *******
-        if clip_model and clip_loss_fn:
-            txt_input_ids = batch["text"].to(device)
-            input_ids_pad_mask = (txt_input_ids == txt_input_ids_pad_value)
-            B, T = x.shape[:2]
-            mu_clip_emb, txt_clip_emb = clip_model(
-                skelmotion_latent_X=mu,  # using mean (mu) as skeletal motion latent embedding
-                text_input_ids=txt_input_ids,
-                skelmotion_padding_mask=x_pad_mask,
-                input_ids_padding_mask=input_ids_pad_mask,
-            )
-            clip_loss_val = clip_loss_fn(mu_clip_emb, txt_clip_emb)
-            loss_val += clip_loss_val
-            loss_clip_tot += clip_loss_val.item()
-        # ******************************************
-
         loss_recon_tot += recon_loss_val.item()
         loss_kl_tot += kl_loss_val.item()
         loss_tot += loss_val.item()
@@ -344,8 +256,6 @@ def evaluate(
         "recon": loss_recon_tot / num_batches,
         "kl": loss_kl_tot / num_batches,
     }
-    if clip_model and clip_loss_fn:
-        output["clip"] = loss_clip_tot / num_batches
 
     return output
 
@@ -357,9 +267,6 @@ def train_skelmotionvae(cfg: dict):
     with open(output_dir + "/config.yaml", "w") as f:
         yaml.dump(cfg, f, default_flow_style=False)
 
-    # -- whether to train a CLIP model (assumes first VAE training have already been performed and ckpt saved)
-    clip_joint_training = cfg["training"].get("with_clip", False)
-
     # -- loading datasets & building dataloaders
     train_data_path = cfg["data"]["train"]["path"]
     val_data_path = cfg["data"]["dev"]["path"]
@@ -370,14 +277,8 @@ def train_skelmotionvae(cfg: dict):
         "id_field": cfg["data"]["id_field"],
         "skip_frames": cfg["data"]["skip_frames"],
     }
-    if clip_joint_training:  # to train CLIP model, we need textual inputs
-        data_params["text_field"] = cfg["data"]["text_field"]
-        data_params["max_sent_len"] = cfg["data"].get("max_sent_len", None)
-        data_params["text_tokenizer"] = get_tokenizer(name=cfg["model"]["clip"]["text_enc"]["pretrained_model_name"])
-        data_params["gloss_field"] = None
-
-    train_data = SLPDataset(**train_path_kwarg, **data_params, load_only_skel=~clip_joint_training)
-    val_data = SLPDataset(**val_path_kwarg, **data_params, load_only_skel=~clip_joint_training)
+    train_data = SLPDataset(**train_path_kwarg, **data_params, load_only_skel=True)
+    val_data = SLPDataset(**val_path_kwarg, **data_params, load_only_skel=True)
 
     pad_value = 0.0
     dataloader_params = {
@@ -398,28 +299,12 @@ def train_skelmotionvae(cfg: dict):
         ckpt_path = cfg["training"]["ckpt"]
         print(f"Continuing VAE training from {ckpt_path}")
         ckpt = load_ckpt(ckpt_path, device=device)
-    if clip_joint_training:
-        assert continue_training and (ckpt is not None), "For CLIP training, pre-trained VAE ckpt is required"
-
-    # -- whether to continue from a given checkpoint for CLIP
-    continue_clip_training = cfg["training"].get("continue_clip_training", False)
-    clip_ckpt = None
-    if continue_clip_training:
-        clip_ckpt_path = cfg["training"]["clip_ckpt"]
-        print(f"Continuing CLIP training from {clip_ckpt_path}")
-        clip_ckpt = load_ckpt(clip_ckpt_path, device=device)
 
     # -- building model
     skelmotionvae = load_vae(name=cfg["model"].get("name", "SkelMotionVAE"), cfg=cfg["model"])
     modules = {}
     if ckpt:
         skelmotionvae.load_state_dict(ckpt["model_state_dict"], strict=False)
-    if clip_joint_training:
-        skelmotionvae.freeze_decoder()  # WARNING: freezing VAE decoder for CLIP joint training
-        latentslclip = LatentSignLanguageCLIP(cfg["model"]["clip"])
-        if clip_ckpt:
-            latentslclip.load_state_dict(clip_ckpt["model_state_dict"])
-        modules["LatentSignLanguageCLIP"] = latentslclip
     modules["SkelMotionVAE"] = skelmotionvae
 
     # -- building losses
@@ -427,11 +312,6 @@ def train_skelmotionvae(cfg: dict):
     recon_loss = ReconstructionLoss(**reconstruction_losses_kwargs, batch_norm=True, target_pad=pad_value)
     kl_loss_kwargs = cfg["losses"].get("kl", {"scaling_factor": 1.})
     kl_loss = KLDivergence(**kl_loss_kwargs)
-    if clip_joint_training:
-        clip_loss = CLIPLoss(**cfg["losses"]["clip"], scaling_factor=1.)
-        if clip_ckpt:
-            clip_loss.load_state_dict(clip_ckpt["clip_loss_state_dict"])
-        modules["CLIPLoss"] = clip_loss
 
     # -- write model info
     write_model_info(path=output_dir + "/model_info.txt", model=modules)
@@ -445,13 +325,6 @@ def train_skelmotionvae(cfg: dict):
         name=cfg["training"]["optimizer"],
         **cfg["training"]["optim_params"]
     )
-    # WARNING: If joint clip training, we should not start from the pre-trained VAE optimizer state.
-    #          Instead, a new optimizer should be initialized, or if continue from the last training
-    #          of a CLIP model, we can take the optimizer state from clip_ckpt.
-    if ckpt and not clip_joint_training:
-        optimizer.load_state_dict(ckpt["optimizer_state_dict"])
-    if clip_ckpt:
-        optimizer.load_state_dict(clip_ckpt["optimizer_state_dict"])
 
     scheduler = get_scheduler(
         optimizer=optimizer,
@@ -465,15 +338,14 @@ def train_skelmotionvae(cfg: dict):
         recon_loss_fn=recon_loss, kl_loss_fn=kl_loss,
         optimizer=optimizer,
         device=device,
+        # **** padding ****
+        skels_pad_value=pad_value,
         # **** beta params ****
         beta_start=cfg["training"]["beta_start"],
         beta_end=cfg["training"]["beta_end"],
         warmup_epochs=cfg["training"]["warmup_epochs"],
         # **** alpha params (optional) ****
         recon_annealing_epochs=cfg["losses"].get("recon_annealing_epochs", None),
-        # **** pad values (when CLIP joint training) ****
-        skels_pad_value=pad_value,
-        txt_input_ids_pad_value=getattr(train_data.text_tokenizer, "pad_id", None),
     )
 
     # -- training model
