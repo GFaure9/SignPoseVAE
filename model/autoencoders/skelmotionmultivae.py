@@ -30,6 +30,34 @@ def read_edges_file(edges_filepath: str) -> list[Tuple[int, int]]:
 
 
 class SkelMotionMultiRegionVAE(VAE):
+    """
+    Variational Autoencoder for skeletal pose sequences.
+    Allows to encode and decode a sequence of skeletal landmarks coordinates.
+
+    It expects by default the format of SLRTP25 CVPR challenge,
+    ie a 178 key-points skeleton, which structure is reminded
+    in ROOT/data/skeleta_data.py.
+    However, it can be easily adapted to other structures skeletal structures, given the correct IDs
+    and edges.
+
+    This VAE separates the torso+arms, right hand, left hand and face regions for encoding and decoding.
+
+    Besides, it handles different design configurations:
+        - different architectures for encoders or decoders
+          (MLP, Graph Convolutional Networks, Residual Temporal Convolutions)
+        - either to predict one mu and logvar per region (factorized latent distribution)
+          or to concatenate each region encoders' outputs to
+          predict a 'unified' mu and logvar (shared latent distribution)
+    Please have a look at 'model' arguments in the YAML config files (in the ROOT/configs/ folder)
+    to see how to define these options.
+
+    For more details about the architecture details, have a look at the scheme
+    in the repo's README file.
+
+    Note that you can output reconstructed poses, mu, logvar and latent poses directly
+    by applying your instantiated `your_vae = SkelMotionMultiRegionVAE(your_cfg)` to an batch
+    of input poses x and their padding mask m as: `x, mu, logv, z = your_vae(x, pad_mask=m)`.
+    """
     def __init__(self, cfg):
         super().__init__()
 

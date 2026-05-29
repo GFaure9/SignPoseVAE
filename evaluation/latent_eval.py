@@ -15,6 +15,13 @@ from ..utils.logs_checkpoints import load_ckpt
 
 
 class LatentSpaceAnalyzer:
+    """
+    Utility class for analyzing latent representations produced by a trained VAE.
+    The analyzer computes statistical and temporal metrics over the latent space
+    of a dataset encoded with a pretrained model.
+
+    See the project README for a detailed description of the available metrics.
+    """
     _default_metrics = (
         "latent_smoothness",
         "covariance_matrix",
@@ -36,6 +43,54 @@ class LatentSpaceAnalyzer:
             batch_size: int = 256,
             device: str = "cuda",
     ):
+        """
+        Run latent-space analysis on a pretrained VAE and dataset.
+
+        This method:
+            1. Loads a pretrained VAE checkpoint.
+            2. Builds the dataset and dataloader.
+            3. Encodes samples into the latent space.
+            4. Computes the requested latent-space metrics.
+            5. Saves the aggregated results as a JSON file.
+
+        Args:
+            cfg_model (dict):
+                Model configuration dictionary used to instantiate the VAE.
+                See the ROOT/configs examples for supported fields and parameters.
+
+            ckpt_path (str):
+                Path to the pretrained VAE checkpoint.
+
+            cfg_data (dict):
+                Dataset configuration dictionary.
+                See ROOT/configs examples for supported fields and dataset properties.
+
+            output_folder (str):
+                Directory where analysis outputs and result files are saved.
+
+            name (str):
+                Experiment or model name used when naming output files.
+
+            metrics (tuple, optional):
+                Tuple of metric names to compute. If ``None``, default metrics defined
+                in ``_default_metrics`` are used.
+
+            plot_correl (bool, optional):
+                Whether to save latent-dimension correlation matrix heatmaps for each
+                processed batch. Defaults to ``False``.
+
+            batch_size (int, optional):
+                Batch size used during latent extraction. Defaults to ``256``.
+
+            device (str, optional):
+                Device used for inference (e.g. ``"cuda"`` or ``"cpu"``).
+                Defaults to ``"cuda"``.
+
+        Returns:
+            dict:
+                Dictionary containing the aggregated latent-space metrics computed
+                over the dataset.
+        """
         os.makedirs(output_folder, exist_ok=True)
 
         # === 1.a) Load the VAE and freeze its weights

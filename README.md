@@ -5,3 +5,13 @@ Official implementation of Sign Pose VAEs from the paper "The Impact of VAE Desi
   <img src="./docs/vae_gensign.png" width="800"/>
   <b>Architecture of the Sign Pose VAE.</b>
 </p>
+
+## 1. Overview
+
+## 2. Setup
+
+## 3. Usage
+
+---
+
+### Citation

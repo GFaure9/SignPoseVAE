@@ -3,6 +3,10 @@ import torch.nn as nn
 
 
 class KLDivergence(nn.Module):
+    """
+    Kullback-Leibler divergence loss.
+    https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence
+    """
     def __init__(
             self, scaling_factor: float = 1.,
             sub_kl_dims: list[int] = None,  # dims to subdivide mu and logvar last dim in multiple mus, logvars

@@ -8,7 +8,6 @@ from .optimizer import get_optimizer, get_scheduler
 from ..model.autoencoders import load_vae
 from ..losses import KLDivergence, ReconstructionLoss
 from ..data.dataset import SLPDataset, build_slp_dataloader
-from ..data.tokenize import get_tokenizer
 from ..utils.logs_checkpoints import save_ckpt, load_ckpt, write_epoch_logs, write_model_info
 
 
@@ -67,7 +66,6 @@ class VAETrainer:
         loss_recon_tot = 0.
         loss_kl_tot = 0.
         loss_tot = 0.
-        loss_clip_tot = 0.
 
         for batch in tqdm(dataloader, desc=f"Epoch {epoch}"):
             x = batch["skels"].to(self.device)
@@ -233,7 +231,6 @@ def evaluate(
     loss_recon_tot = 0.
     loss_kl_tot = 0.
     loss_tot = 0.
-    loss_clip_tot = 0.
 
     for batch in tqdm(dataloader):
         x = batch["skels"].to(device)

@@ -7,6 +7,16 @@ from ..data.skeletal_data import MediaPipe50KeyPoints, Skel178_face_ids, Skel178
 
 
 class ReconstructionLoss(nn.Module):
+    """
+    Class to compute a weighted sum of selected "reconstruction" errors, ie quantities
+    reflecting the geometric distance between ground truth and reconstructed (predicted) skeletal poses.
+    The list of possible losses are the keys of the following dictionary and
+    correspond to either l1 / l2 norm of the difference between poses joints positions, velocities
+    or accelerations over different regions of the skeleton.
+
+    Please have a look at 'losses: recon' arguments in the YAML config files (in the ROOT/configs/ folder)
+    to see how the reconstruction loss params can be defined.
+    """
     losses = {
 
         # -- Standard losses
@@ -36,6 +46,35 @@ class ReconstructionLoss(nn.Module):
             batch_norm: bool = True, target_pad: float = 0.0,
             apply_frames_weighting: str = None,
     ):
+        """
+        Args:
+            list_losses (List[str], optional):
+                List of loss names to apply during training. Each entry must correspond
+                to a key in ``self.losses``. Defaults to ``["position"]`` if not provided.
+
+            scaling_factors (Dict[str, float], optional):
+                Scaling coefficients applied to each loss term before accumulation.
+                Keys must match entries in ``list_losses``. If ``None`` and
+                ``list_losses`` is also ``None``, defaults to ``{"position": 1.0}``.
+
+            losses_params (Dict[str, Any], optional):
+                Additional keyword arguments for each loss function. The dictionary
+                should map loss names to dictionaries of parameters passed to the
+                corresponding loss implementation.
+
+            batch_norm (bool, optional):
+                Whether to normalize each loss term by the batch size and/or number
+                of valid elements. Defaults to ``True``.
+
+            target_pad (float, optional):
+                Padding value used in ``targets`` to identify invalid or padded frames.
+                Defaults to ``0.0``.
+
+            apply_frames_weighting (str, optional):
+                Strategy name for frame-wise weighting applied to position-based
+                reconstruction losses. If provided, frame weights are computed using
+                ``get_frames_weighting`` and passed to the corresponding loss function.
+        """
         super().__init__()
         if list_losses is None:
             list_losses = ["position"]
@@ -53,6 +92,32 @@ class ReconstructionLoss(nn.Module):
                   f" using the '{apply_frames_weighting}' method.")
 
     def forward(self, preds: torch.Tensor, targets: torch.Tensor, annealing_factors: dict[str, float] = None):
+        """
+        Compute the weighted multi-loss objective for a batch of predictions.
+
+        Args:
+            preds (torch.Tensor):
+                Predicted tensor of shape (B, T, N, 3) (T=frames, N=num joints)
+
+            targets (torch.Tensor):
+                Ground-truth tensor of shape (B, T, N, 3).
+                Frames containing only ``target_pad`` values are masked and no error is computed on them.
+
+            annealing_factors (dict[str, float], optional):
+                Per-loss multiplicative annealing coefficients applied during training.
+                Keys should match entries in ``list_losses``. Missing entries default
+                to ``1.0``.
+
+        Returns:
+            torch.Tensor:
+                Scalar tensor (total weighted loss obtained by summing all)
+
+        Notes:
+            - Position-based losses can optionally receive frame-wise weighting through
+              ``apply_frames_weighting``.
+            - Each loss contribution is computed as:
+              ``annealing_factor * scaling_factor * loss_value``
+        """
         # X is of shape (B, T, N, 3)
         B, T = targets.shape[:2]
         frame_mask = (targets.view(B, T, -1) != self.target_pad).any(dim=-1, keepdim=True).float()  # (B, T, 1)
