@@ -10,10 +10,15 @@ Official implementation of Sign Pose VAEs from the paper "The Impact of VAE Desi
 
 ---
 ## Table of Content
+
 [1. Overview](#1-overview)
+
 [2. Setup](#2-setup)
+
 [3. Usage](#3-usage)
+
 [4. Outputs examples](#4-outputs-examples)
+
 [Citation](#citation)
 
 ---
@@ -158,8 +163,44 @@ main differences between variants:
 
 ## 2. Setup
 
-1. 
+First, clone the repository:
 
+```bash
+git clone https://github.com/sign-language-processing/pose-evaluation.git
+```
+
+Then create a virtual environment and once activated, run the following command to
+install the required packages:
+
+```bash
+pip install -r requirements.txt
+```
+
+After this, please install manually the
+https://github.com/sign-language-processing/pose-evaluation repository as a package, 
+to allow for the computation of some additional geometric metrics for evaluation (namely DTWp):
+
+```bash
+pip install git+https://github.com/sign-language-processing/pose-evaluation.git
+```
+
+Finally, to install the tools needed for the evaluation of sign poses reconstruction quality:
+- in the `utils/metrics` folder, clone https://github.com/walsharry/SLRTP-Sign-Production-Evaluation repository
+and rename it to `slrtp_challenge_2025_evaluation`.
+- in `utils` create a `slt_models` folder and inside it copy the `back_translation` folder 
+of the `slrtp_challenge_2025_evaluation` repo. Rename it to `slrtp25_bt_phoenix14t`.
+
+At the end, your `utils` folders tree should look like that:
+
+```text
+v utils
+    v metrics
+        > evaluation
+        > slrtp_challenge_2025_evaluation  # Contains SLRTP-Sign-Production-Evaluation without back_translation
+    > slt_models
+        > slrtp25_bt_phoenix14t  # SLRTP-Sign-Production-Evaluation/back_translation content
+    > visualization
+```
 
 ## 3. Usage
 
