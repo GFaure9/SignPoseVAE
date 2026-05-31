@@ -1,5 +1,6 @@
 # SignPoseVAE
-Official implementation of Sign Pose VAEs from the paper "The Impact of VAE Design on Latent Pose Representations for Diffusion-basedSign Language Production" (CVPRW GenSign 2026).
+Official implementation of Sign Pose VAEs
+from the paper "The Impact of VAE Design on Latent Pose Representations for Diffusion-based Sign Language Production" (CVPRW GenSign 2026).
 
 <p align="center">
   <img src="./docs/vae_gensign.png" width="800"/>
@@ -24,6 +25,7 @@ Official implementation of Sign Pose VAEs from the paper "The Impact of VAE Desi
 ---
 
 ## 1. Overview
+[back to table of content](#table-of-content)
 
 This repository provides scripts and tools to:
 - easily define multiple variants of
@@ -162,6 +164,7 @@ main differences between variants:
 </p>
 
 ## 2. Setup
+[back to table of content](#table-of-content)
 
 **To instantiate and train Sign Pose VAEs**
 
@@ -180,7 +183,7 @@ pip install -r requirements.txt
 
 **To evaluate the VAEs outputs**
 
-Then, iff you want to compute evaluation metrics on reconstructed poses,
+Then, if you want to compute evaluation metrics on reconstructed poses,
 please follow the instructions below.
 
 Install manually the
@@ -210,6 +213,7 @@ v utils
 ```
 
 ## 3. Usage
+[back to table of content](#table-of-content)
 
 > [!NOTE]
 > NB: before using latent pose representations to train a latent generative model,
@@ -217,10 +221,12 @@ v utils
 > decoding).
 
 ## 4. Outputs examples
+[back to table of content](#table-of-content)
 
 ---
 
 ### Citation
+[back to table of content](#table-of-content)
 
 If you use this repository for your research, please cite it as follows:
 ```text
