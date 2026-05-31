@@ -89,7 +89,29 @@ losses:
 
 is equivalent to
 
-$$\mathcal{L}_{\text{recon}} := ???$$
+$$
+\begin{aligned}
+\mathcal{L}_{\text{recon}}
+:= \frac{1}{F}\sum_f \Bigg(
+&\frac{10}{N_\text{T-A}}
+\sum_{j\in \text{T-A}}
+\| x_{j,f} - \hat{x}_{j,f} \|_2^2 + \frac{20}{N_\text{RH}}
+\sum_{j\in \text{RH}}
+\| x_{j,f} - \hat{x}_{j,f} \|_1 \\
++& \frac{15}{N_\text{LH}}
+\sum_{j\in \text{LH}}
+\| x_{j,f} - \hat{x}_{j,f} \|_1 + \frac{5}{N_\text{Face}}
+\sum_{j\in \text{Face}}
+\| x_{j,f} - \hat{x}_{j,f} \|_1
+\Bigg) \\
++& \frac{1}{F-1}\frac{7.5}{N_\text{T-A}}
+\sum_{j\in \text{LH}}
+\| (x_{j,f+1} - x_{j, f}) - (\hat{x}_{j,f+1} - \hat{x}_{j,f}) \|_2^2
+\end{aligned}
+$$
+
+where $x_{j,f}$ and $\hat{x}_{j,f}$ are respectively the $j$-th joint 3D coordinates of ground truth and predicted poses
+at frame $f$.
 
 The **Kullback-Leibler divergence loss** ???
 
@@ -112,6 +134,7 @@ main differences between variants:
 
 ## 3. Usage
 
+![NOTE]
 NB: before using latent pose representations to train a latent generative models,
 we recommend standardizing the latent poses as ??? (and de-standardize the generated outputs before
 decoding).
