@@ -100,7 +100,7 @@ in the [configs/](configs) folder. The following table is a recap of the
 main differences between variants:
 
 <p align="center">
-  <img src="./docs/variants.png" width="600"/>
+  <img src="./docs/variants.png" width="700"/>
   <b>Sign Pose VAE variants.</b>
 </p>
 
