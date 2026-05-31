@@ -8,6 +8,16 @@ Official implementation of Sign Pose VAEs from the paper "The Impact of VAE Desi
   <b>Architecture of the Sign Pose VAE.</b>
 </p>
 
+---
+## Table of Content
+[1. Overview](#1-overview)
+[2. Setup](#2-setup)
+[3. Usage](#3-usage)
+[4. Outputs examples](#4-outputs-examples)
+[Citation](#citation)
+
+---
+
 ## 1. Overview
 
 This repository provides scripts and tools to:
@@ -113,7 +123,23 @@ $$
 where $x_{j,f}$ and $\hat{x}_{j,f}$ are respectively the $j$-th joint 3D coordinates of ground truth and predicted poses
 at frame $f$.
 
-The **Kullback-Leibler divergence loss** ???
+In the case of a factorized latent distribution $\Pi_{r \in \text{Regions}}q_{\phi_r}(z[r]|x[r])$
+, we use a weighted sum of **Kullback-Leibler divergence loss** defined on each region $r$'s latent poses, i.e:
+
+$$ D_\text{KL} = \sum_{r\in \text{Regions}} w_r ~ D_\text{KL}^{(r)}.$$
+
+In that case, the latent dimensions of each region and scaling factors must be defined
+in the configuration file under the `losses: kl` key-words following the same logic as the
+following example:
+
+```yaml
+  kl:
+    sub_kl_dims: [10, 24, 24, 6]  # order TORSO+ARMS | RH | LH | FACE (must match latent dims)
+    sub_kl_factors: [1., 1., 1., .1]
+    scaling_factor: 0.25  # global scaling factor to multiply D_KL
+```
+
+For "shared" latent distribution, only the global `scaling_factor` can be defined (default to 1.).
 
 #### iv. The VAE variants
 
@@ -132,12 +158,15 @@ main differences between variants:
 
 ## 2. Setup
 
+1. 
+
+
 ## 3. Usage
 
-![NOTE]
-NB: before using latent pose representations to train a latent generative models,
-we recommend standardizing the latent poses as ??? (and de-standardize the generated outputs before
-decoding).
+> [!NOTE]
+> NB: before using latent pose representations to train a latent generative model,
+> we recommend standardizing the latent poses as ??? (and de-standardize the generated outputs before
+> decoding).
 
 ## 4. Outputs examples
 
