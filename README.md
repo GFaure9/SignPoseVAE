@@ -163,20 +163,27 @@ main differences between variants:
 
 ## 2. Setup
 
+**To instantiate and train Sign Pose VAEs**
+
 First, clone the repository:
 
 ```bash
 git clone https://github.com/sign-language-processing/pose-evaluation.git
 ```
 
-Then create a virtual environment and once activated, run the following command to
+Second, create a virtual environment and once activated, run the following command to
 install the required packages:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-After this, please install manually the
+**To evaluate the VAEs outputs**
+
+Then, iff you want to compute evaluation metrics on reconstructed poses,
+please follow the instructions below.
+
+Install manually the
 https://github.com/sign-language-processing/pose-evaluation repository as a package, 
 to allow for the computation of some additional geometric metrics for evaluation (namely DTWp):
 
