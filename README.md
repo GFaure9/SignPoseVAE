@@ -3,6 +3,8 @@ Official implementation of Sign Pose VAEs from the paper "The Impact of VAE Desi
 
 <p align="center">
   <img src="./docs/vae_gensign.png" width="800"/>
+</p>
+<p align="center">
   <b>Architecture of the Sign Pose VAE.</b>
 </p>
 
@@ -101,6 +103,8 @@ main differences between variants:
 
 <p align="center">
   <img src="./docs/variants.png" width="700"/>
+</p>
+<p align="center">
   <b>Sign Pose VAE variants.</b>
 </p>
 
