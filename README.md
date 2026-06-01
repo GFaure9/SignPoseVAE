@@ -224,10 +224,6 @@ v utils
 ## 3. Usage
 [*&uarr; back to table of contents*](#table-of-contents)
 
-The entry point supports four modes: train, predict, videos, and eval.
-
-All commands require a configuration file: `--cfg_path path/to/config.yaml`.
-
 #### i) Training a VAE
 
 Train a VAE from scratch:
