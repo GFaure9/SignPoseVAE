@@ -215,13 +215,66 @@ v utils
 ## 3. Usage
 [*&uarr; back to table of contents*](#table-of-contents)
 
-#### i) Instantiating a VAE
+The entry point supports four modes: train, predict, videos, and eval.
 
-#### ii) Training a VAE
+All commands require a configuration file: `--cfg_path path/to/config.yaml`.
 
-#### iii) Evaluating a VAE
+#### i) Training a VAE
 
-#### iv) Characterizing a VAE's latent space
+Train a VAE from scratch:
+
+```bash
+python -m SignPoseVAE \
+  --mode train \
+  --cfg_path path/to/config.yaml
+```
+
+The training configuration (model, data, optimization, output directory)
+is fully defined in the YAML file.
+
+
+#### ii) Compute predictions
+
+Run the trained VAE on a dataset and compute latent representations:
+
+```bash
+python -m SignPoseVAE \
+  --mode predict \
+  --cfg_path path/to/config.yaml \
+  --ckpt_path path/to/checkpoint.pt \
+  --data_name <dataset_key> \
+  --output_folder path/to/output \
+  --batch_size 64
+```
+
+This will:
+- load the pretrained checkpoint
+- encode the dataset into latent space
+- save predictions for downstream analysis
+
+#### iii) Generating comparison videos (GT vs prediction)
+
+Generate side-by-side ground truth vs prediction videos:
+
+```bash
+python -m SignPoseVAE \
+  --mode videos \
+  --cfg_path path/to/config.yaml \
+  --data_name <dataset_key> \
+  --pred_data_filepath path/to/predictions.pt
+```
+
+Outputs are saved in: `<output_dir>/videos/<predictions_folder>/<dataset_name>_predictions/`
+
+Videos are rendered at 25 FPS by default.
+
+#### iv) Evaluating VAE's reconstructed poses (predictions) with an SLP evaluation pipeline
+
+???
+
+#### v) Characterizing VAE's latent space
+
+???
 
 > [!NOTE]
 > NB: before using latent pose representations to train a latent generative model,
