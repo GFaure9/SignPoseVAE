@@ -215,26 +215,48 @@ v utils
 ## 3. Usage
 [*&uarr; back to table of contents*](#table-of-contents)
 
+#### i) Instantiating a VAE
+
+#### ii) Training a VAE
+
+#### iii) Evaluating a VAE
+
+#### iv) Characterizing a VAE's latent space
+
 > [!NOTE]
 > NB: before using latent pose representations to train a latent generative model,
-> we recommend standardizing the latent poses as ??? (and de-standardize the generated outputs before
+> we recommend standardizing the latent poses as 
+> $\frac{z - \textbf{latent poses mean on train set}}{\textbf{latent poses std on train set}}$ 
+> (and de-standardize the generated outputs before
 > decoding).
 
 ## 4. Outputs examples
 [*&uarr; back to table of contents*](#table-of-contents)
 
+The following GIFs show some examples of reconstructed poses (right) from their corresponding
+ground truth sequences (right), using the *MultiObjVAE* trained with $\beta_{max}=0.01$.
+The examples are taken from *Phoenix14T* test set.
+
+We chose to encode and decode padded sequences (the frames where the ground truth skeleton is
+grayed out correspond to null $\mathbb{R}^{F\times N \times 3}$ per frame matrices) so that we
+can also visualize the static / averaged pose produced by the VAE for a null (PAD) entry.
+
+- **Example ID: 05June_2010_Saturday_tagesschau-3925**
 <p align="center">
   <img src="./docs/gifs/05June_2010_Saturday_tagesschau-3925.gif" width="100%" />
 </p>
 
+- **Example ID: 06January_2011_Thursday_tagesschau-5641**
 <p align="center">
   <img src="./docs/gifs/06January_2011_Thursday_tagesschau-5641.gif" width="100%" />
 </p>
 
+- **Example ID: 24October_2010_Sunday_tagesschau-2909**
 <p align="center">
   <img src="./docs/gifs/24October_2010_Sunday_tagesschau-2909.gif" width="100%" />
 </p>
 
+- **Example ID: 25November_2009_Wednesday_tagesschau-7666**
 <p align="center">
   <img src="./docs/gifs/25November_2009_Wednesday_tagesschau-7666.gif" width="100%" />
 </p>
