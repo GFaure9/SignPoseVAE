@@ -2,7 +2,7 @@
 Official implementation of Sign Pose VAEs
 from the paper 
 ["The Impact of VAE Design on Latent Pose Representations for Diffusion-based Sign Language Production"](https://openaccess.thecvf.com/content/CVPR2026W/GenSign/html/Faure_The_Impact_of_VAE_Design_on_Latent_Pose_Representations_for_CVPRW_2026_paper.html)
-(CVPRW GenSign 2026).
+(Guilhem Fauré, Mostafa Sadeghi, Sam Bigeard, Slim Ouni, *CVPRW GenSign 2026*).
 
 <p align="center">
   <img src="./docs/vae_gensign.png" width="800"/>
