@@ -1,0 +1,223 @@
+# ======================================================== DATA ========================================================
+
+data:
+  train:
+    path: "datasets/phoenix14t/train.pt"
+    type: "file"  # file or folder
+  dev:
+    path: "datasets/phoenix14t/dev.pt"
+    type: "file"  # file or folder
+  test:
+    path: "datasets/phoenix14t/test.pt"
+    type: "file"  # file or folder
+  skel_field: "poses_3d"
+  id_field: "name"
+  skip_frames: 1
+
+# ======================================================= MODEL ========================================================
+
+model:
+  name: SkelMotionMultiRegionVAE
+
+  T: 256
+
+  # ---------------------------------------------------- Skeleton info -------------------------------------------------
+
+  Npts_torsoarms: 10  # 8 + 2 hands wrists
+  Npts_rh: 21
+  Npts_lh: 21
+  Npts_face: 128
+  Npts_tot: 178
+
+  id_torsoarms_rwrist: 8
+  id_torsoarms_lwrist: 9
+
+  # ------------------------------------------- Latent dimensions (per region) -----------------------------------------
+
+  latent_dim_torsoarms: 10
+  latent_dim_rh: 24
+  latent_dim_lh: 24
+  latent_dim_face: 6
+
+  shared_latent_distribution: yes
+
+  # ---------------------------------------------- Encoders (per region) -----------------------------------------------
+
+  encoder_torsoarms:
+    dim_out: 64
+    # >> MLP params
+    hidden_dims: [16, 32]
+    # ********************** OPTIONAL **********************
+    # >> Alternative to MLP: Graph. Conv. Layers (optional)
+    use_gcn: yes
+    n_gcn_layers: 2
+    # >> Res. Tem. Conv. (optional)
+    use_temp_conv: yes
+    n_restconv_blocks: 1
+    convt_kernel_size: 3
+    convt_dilation: 1
+    # >> Attn. Pooling (optional)
+    use_attn_pooling: yes
+    # ******************************************************
+
+  encoder_rh:
+    dim_out: 128
+    # >> MLP params
+    hidden_dims: [32, 64]
+    # ********************** OPTIONAL **********************
+    # >> Alternative to MLP: Graph. Conv. Layers (optional)
+    use_gcn: yes
+    n_gcn_layers: 2
+    # >> Res. Tem. Conv. (optional)
+    use_temp_conv: yes
+    n_restconv_blocks: 1
+    convt_kernel_size: 3
+    convt_dilation: 1
+    # >> Attn. Pooling (optional)
+    use_attn_pooling: yes
+    # ******************************************************
+
+  encoder_lh:
+    dim_out: 128
+    # >> MLP params
+    hidden_dims: [32, 64]
+    # ********************** OPTIONAL **********************
+    # >> Alternative to MLP: Graph. Conv. Layers (optional)
+    use_gcn: yes
+    n_gcn_layers: 2
+    # >> Res. Tem. Conv. (optional)
+    use_temp_conv: yes
+    n_restconv_blocks: 1
+    convt_kernel_size: 3
+    convt_dilation: 1
+    # >> Attn. Pooling (optional)
+    use_attn_pooling: yes
+    # ******************************************************
+
+  encoder_face:
+    dim_out: 128
+    # >> MLP params
+    hidden_dims: [64, 128]
+    # ********************** OPTIONAL **********************
+    # >> Res. Tem. Conv. (optional)
+    use_temp_conv: no
+    n_restconv_blocks: 1
+    convt_kernel_size: 3
+    convt_dilation: 1
+    # >> Attn. Pooling (optional)
+    use_attn_pooling: yes
+    # ******************************************************
+
+  # ********************** OPTIONAL **********************
+  # >> additional MLP (fully connected layers) before encoders heads (optional)
+  fc_torsoarms: yes
+  fc_rh: yes
+  fc_lh: yes
+  fc_face: yes
+  # ******************************************************
+
+  # ---------------------------------------------- Decoders (per region) -----------------------------------------------
+  decoder_torsoarms:
+    hidden_dims: [32, 16]
+    # ********************** OPTIONAL **********************
+    # >> Res. Tem. Conv. (optional)
+    use_temp_conv: yes
+    n_restconv_blocks: 1
+    convt_kernel_size: 3
+    convt_dilation: 1
+    # ******************************************************
+
+  decoder_rh:
+    hidden_dims: [64, 32]
+    # ********************** OPTIONAL **********************
+    # >> Res. Tem. Conv. (optional)
+    use_temp_conv: yes
+    n_restconv_blocks: 1
+    convt_kernel_size: 3
+    convt_dilation: 1
+    # ******************************************************
+
+  decoder_lh:
+    hidden_dims: [64, 32]
+    # ********************** OPTIONAL **********************
+    # >> Res. Tem. Conv. (optional)
+    use_temp_conv: yes
+    n_restconv_blocks: 1
+    convt_kernel_size: 3
+    convt_dilation: 1
+    # ******************************************************
+
+  decoder_face:
+    hidden_dims: [128, 64]
+    # ********************** OPTIONAL **********************
+    # >> Res. Tem. Conv. (optional)
+    use_temp_conv: no
+    n_restconv_blocks: 1
+    convt_kernel_size: 3
+    convt_dilation: 1
+    # ******************************************************
+
+  use_face_temp_refiner: yes
+
+# ======================================================= LOSSES =======================================================
+
+losses:
+
+  # -------------------------------------------------- Reconstruction --------------------------------------------------
+  recon:
+    list_losses:
+      - torsoarms_position
+      - rh_position
+      - lh_position
+      - face_position
+
+    scaling_factors:
+      torsoarms_position: 14.5
+      rh_position: 14.5
+      lh_position: 14.5
+      face_position: 14.5
+
+    losses_params:
+      torsoarms_position:
+        loss: l1
+      rh_position:
+        loss: l1
+      lh_position:
+        loss: l1
+      face_position:
+        loss: l1
+  # -------------------------------------------------- KL Divergence --------------------------------------------------
+  kl:
+    scaling_factor: 0.01
+
+# ====================================================== TRAINING ======================================================
+
+training:
+  output_dir: "results/StructVAE"
+
+  device: "cuda"
+
+  continue: no
+#  ckpt: "/path/to/model.ckpt"
+
+  batch_size: 128
+  max_epoch: 1000
+  validation_frequency: 10
+  learning_rate_min: 1.e-6
+  beta_start: 0.
+  beta_end: 1.
+  warmup_epochs: 100
+
+  # -- Optimizer
+  optimizer: "adam"
+  optim_params:
+    lr: 1.e-3
+    betas: [0.9, 0.999]
+    eps: 1.e-8
+
+  # -- Scheduler
+  scheduler: "plateau"
+  schedule_params:
+    factor: 0.5
+    patience: 5
+    threshold: 1.e-4

@@ -1,6 +1,8 @@
 # SignPoseVAE
 Official implementation of Sign Pose VAEs
-from the paper "The Impact of VAE Design on Latent Pose Representations for Diffusion-based Sign Language Production" (CVPRW GenSign 2026).
+from the paper 
+["The Impact of VAE Design on Latent Pose Representations for Diffusion-based Sign Language Production"](https://openaccess.thecvf.com/content/CVPR2026W/GenSign/html/Faure_The_Impact_of_VAE_Design_on_Latent_Pose_Representations_for_CVPRW_2026_paper.html)
+(CVPRW GenSign 2026).
 
 <p align="center">
   <img src="./docs/vae_gensign.png" width="800"/>
@@ -8,6 +10,13 @@ from the paper "The Impact of VAE Design on Latent Pose Representations for Diff
 <p align="center">
   <b>Architecture of the Sign Pose VAE.</b>
 </p>
+
+> [!IMPORTANT]
+> This repository is an initial version and may evolve over time. Additional improvements, including more documentation and usage instructions, 
+> may be added in the future.
+>
+> If you encounter any issues for installation, usage, or understanding, please do not hesitate to contact us at:
+> `[FIRST AUTHOR NAME].[FIRST AUTHOR SURNAME][AT]inria.fr`.
 
 ---
 ## Table of Contents
@@ -270,11 +279,67 @@ Videos are rendered at 25 FPS by default.
 
 #### iv) Evaluating VAE's reconstructed poses (predictions) with an SLP evaluation pipeline
 
-???
+Run full sign language production evaluation on generated poses.
+
+Basic usage (predictions file):
+
+```bash
+python -m SignPoseVAE.evaluate \
+  --ground_truth_data_filepath path/to/gt_data.pt \
+  --predicted_data_filepath path/to/predictions.pt \
+  --eval_name base \
+  --output_folder ./slp_eval_results
+
+```
+
+OR using a predictions' folder:
+
+```bash
+python -m SignPoseVAE.evaluate \
+  --ground_truth_data_filepath path/to/gt_data.pt \
+  --predicted_data_folder path/to/predictions_folder \
+  --eval_name base \
+  --output_folder ./slp_eval_results
+```
+
+Default behavior:
+- Uses evaluator: `EvaluatorP14TvSLRTP25` (cf. [utils/metrics/evaluation/evaluator.py](utils/metrics/evaluation/evaluator.py))
+- Applies temporal downsampling (skip_frames=2 for 25 FPS => ~12 FPS)
+- Cuts sequences to same length (cut to shorter sequence)
+- Uses back-translation model in [utils/slt_models/slrtp25_bt_phoenix14t](utils/slt_models/slrtp25_bt_phoenix14t)
+- Does NOT apply smoothing by default
+- Does NOT store per-sample results by default
+
+Optional useful flags (set them to `True` to activate them): `--apply_savgol_smoothing` (to apply Savitzky-Golay filter
+on generated motion before evaluation), `--store_per_sample_results` (to store results for each sample - not only the mean),
+`--ensure_consistent_gt_orientation` (check that GT and predicted poses have same orientation, i.e no flipped skeletons).
 
 #### v) Characterizing VAE's latent space
 
-???
+Compute statistical properties of the latent space (typically from the train set) across one or more experiments.
+
+Basic usage:
+
+```bash
+python -m SignPoseVAE.characterize_latent_space \
+  --output_folders path/to/output1,path/to/output2 \
+  --names exp1,exp2 \
+  --cfg_model_filepaths path/to/model1.yaml,path/to/model2.yaml \
+  --ckpt_filepaths path/to/model1.ckpt,path/to/model2.ckpt \
+  --cfg_data_filepaths path/to/data1.yaml,path/to/data2.yaml
+```
+
+Optional arguments:
+`--metrics latent_smoothness,covariance_matrix,latent_energy` (metrics to compute with default = all available metrics),
+`--batch_size 256` (batch size used for latent inference), `--plot_correl` (if set, saves correlation matrix heatmaps for each batch).
+
+Notes:
+- All multi-experiment arguments must be comma-separated and in matching order.
+- Each experiment must provide a consistent set of:
+  (model config, checkpoint, dataset config, output folder, name)
+
+Please refer to the section 3.3.2 (**Latent Space Analysis**) of the article for detailed information
+about the computed properties.
 
 > [!NOTE]
 > NB: before using latent pose representations to train a latent generative model,

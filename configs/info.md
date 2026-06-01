@@ -1,0 +1,1 @@
+### Sign Pose VAE variants' configurations (BaseVAE, StructVAE, MultiObjVAE, FactorVAE) with $\beta_{max}=0.01$.

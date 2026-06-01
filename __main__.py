@@ -16,7 +16,7 @@ def main():
     ap = argparse.ArgumentParser(f"LatSkelClipDiff-Modules")
 
     # Always required
-    ap.add_argument("--mode", choices=["train", "predict", "videos", "eval"], required=True)
+    ap.add_argument("--mode", choices=["train", "predict", "videos", "eval", "latent_analysis"], required=True)
     ap.add_argument("--cfg_path", type=str, required=True)
 
     # Required for 'predict' mode
@@ -96,7 +96,11 @@ def main():
 
     # >> EVALUATION -------------------------
     elif args.mode == "eval":
-        raise NotImplementedError
+        raise NotImplementedError("Please run the evaluate.py file for evaluation.")
+
+    # >> LATENT SPACE ANALYSIS -------------
+    elif args.mode == "latent_analysis":
+        raise NotImplementedError("Please run the characterize_latent_space.py file for latent space analysis.")
 
     else:
         raise ValueError(f"Unknown mode '{args.mode}' for model={args.model}")
