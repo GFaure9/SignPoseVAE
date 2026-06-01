@@ -10,7 +10,7 @@ from the paper "The Impact of VAE Design on Latent Pose Representations for Diff
 </p>
 
 ---
-## Table of Content
+## Table of Contents
 
 [1. Overview](#1-overview)
 
@@ -25,7 +25,7 @@ from the paper "The Impact of VAE Design on Latent Pose Representations for Diff
 ---
 
 ## 1. Overview
-[back to table of content](#table-of-content)
+[*$\uparrow$ back to table of contents*](#table-of-contents)
 
 This repository provides scripts and tools to:
 - easily define multiple variants of
@@ -164,7 +164,7 @@ main differences between variants:
 </p>
 
 ## 2. Setup
-[back to table of content](#table-of-content)
+[*$\uparrow$ back to table of contents*](#table-of-contents)
 
 **To instantiate and train Sign Pose VAEs**
 
@@ -213,7 +213,7 @@ v utils
 ```
 
 ## 3. Usage
-[back to table of content](#table-of-content)
+[*$\uparrow$ back to table of contents*](#table-of-contents)
 
 > [!NOTE]
 > NB: before using latent pose representations to train a latent generative model,
@@ -221,12 +221,19 @@ v utils
 > decoding).
 
 ## 4. Outputs examples
-[back to table of content](#table-of-content)
+[*$\uparrow$ back to table of contents*](#table-of-contents)
+
+<p align="center">
+  <img src="./docs/gifs/05June_2010_Saturday_tagesschau-3925.gif" width="25%" />
+  <img src="./docs/gifs/06January_2011_Thursday_tagesschau-5641.gif" width="25%" />
+  <img src="./docs/gifs/24October_2010_Sunday_tagesschau-2909.gif" width="25%" />
+  <img src="./docs/gifs/25November_2009_Wednesday_tagesschau-7666.gif" width="25%" />
+</p>
 
 ---
 
 ### Citation
-[back to table of content](#table-of-content)
+[*$\uparrow$ back to table of contents*](#table-of-contents)
 
 If you use this repository for your research, please cite it as follows:
 ```text
