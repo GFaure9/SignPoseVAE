@@ -224,13 +224,19 @@ v utils
 [*&uarr; back to table of contents*](#table-of-contents)
 
 <p align="center">
-  <img src="./docs/gifs/05June_2010_Saturday_tagesschau-3925.gif" width="50%" />
-  <img src="./docs/gifs/06January_2011_Thursday_tagesschau-5641.gif" width="50%" />
+  <img src="./docs/gifs/05June_2010_Saturday_tagesschau-3925.gif" width="100%" />
 </p>
 
 <p align="center">
-  <img src="./docs/gifs/24October_2010_Sunday_tagesschau-2909.gif" width="50%" />
-  <img src="./docs/gifs/25November_2009_Wednesday_tagesschau-7666.gif" width="50%" />
+  <img src="./docs/gifs/06January_2011_Thursday_tagesschau-5641.gif" width="100%" />
+</p>
+
+<p align="center">
+  <img src="./docs/gifs/24October_2010_Sunday_tagesschau-2909.gif" width="100%" />
+</p>
+
+<p align="center">
+  <img src="./docs/gifs/25November_2009_Wednesday_tagesschau-7666.gif" width="100%" />
 </p>
 
 ---
