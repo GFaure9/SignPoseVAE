@@ -224,6 +224,10 @@ v utils
 ## 3. Usage
 [*&uarr; back to table of contents*](#table-of-contents)
 
+You first need to define a YAML configuration file containing the information for dataset, model architecture,
+loss functions, training / optimization strategies and output directory. To do so, you can refer to the examples
+in the [configs/](configs) folder.
+
 #### i) Training a VAE
 
 Train a VAE from scratch:
@@ -352,7 +356,7 @@ ground truth sequences (right), using the *MultiObjVAE* trained with $\beta_{max
 The examples are taken from *Phoenix14T* test set.
 
 We chose to encode and decode padded sequences (the frames where the ground truth skeleton is
-grayed out correspond to null $\mathbb{R}^{F\times N \times 3}$ per frame matrices) so that we
+grayed out correspond to null $\mathbb{R}^{N \times 3}$ per frame matrices) so that we
 can also visualize the static / averaged pose produced by the VAE for a null (PAD) entry.
 
 - **Example ID: 05June_2010_Saturday_tagesschau-3925**
