@@ -131,7 +131,7 @@ $$
 \| x_{j,f} - \hat{x}_{j,f} \|_1
 \Bigg) \\
 +& \frac{1}{F-1}\frac{7.5}{N_\text{T-A}}
-\sum_{j\in \text{LH}}
+\sum_{j\in \text{T-A}}
 \| (x_{j,f+1} - x_{j, f}) - (\hat{x}_{j,f+1} - \hat{x}_{j,f}) \|_2^2
 \end{aligned}
 $$
